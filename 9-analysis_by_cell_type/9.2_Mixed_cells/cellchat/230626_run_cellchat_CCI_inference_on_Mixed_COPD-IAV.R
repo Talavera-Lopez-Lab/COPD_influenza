@@ -17,7 +17,7 @@ use_python("/Users/cartalop/mambaforge/envs/scanpy/bin", required = TRUE)
 
 ad <- import("anndata", convert = FALSE)
 pd <- import("pandas", convert = FALSE)
-ad_object <- ad$read_h5ad("../../../data/Mixed_Healthy-CTRL_anotated.h5ad")
+ad_object <- ad$read_h5ad("../../../data/Mixed_COPD-IAV_anotated.h5ad")
 
 ### Access expression matrix
 
@@ -58,7 +58,7 @@ cellchat <- filterCommunication(cellchat, min.cells = 5)
 
 df.net <- subsetCommunication(cellchat)
 head(df.net)
-write.table(df.net, sep = ',', row.names = FALSE, './inferences/Mixed_Healthy-CTRL_cellchat_net.csv')
+write.table(df.net, sep = ',', row.names = FALSE, './inferences/Mixed_COPD-IAV_cellchat_net.csv')
 
 ### Infer cell-cell communication
 
@@ -154,4 +154,4 @@ plotGeneExpression(cellchat, signaling = "FN1")
 
 # Save object 
 
-saveRDS(cellchat, file = "../../../data/Mixed_Healthy-CTRL_anotated.rds")
+saveRDS(cellchat, file = "../../../data/Mixed_COPD-IAV_anotated.rds")
