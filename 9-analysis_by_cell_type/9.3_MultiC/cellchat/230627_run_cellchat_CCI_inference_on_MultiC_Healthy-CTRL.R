@@ -17,7 +17,7 @@ use_python("/Users/cartalop/mambaforge/envs/scanpy/bin", required = TRUE)
 
 ad <- import("anndata", convert = FALSE)
 pd <- import("pandas", convert = FALSE)
-ad_object <- ad$read_h5ad("../../../data/Mixed_Healthy-IAV_anotated.h5ad")
+ad_object <- ad$read_h5ad("../../../data/MultiC_Healthy-CTRL_anotated.h5ad")
 
 ### Access expression matrix
 
@@ -33,7 +33,7 @@ meta <- meta.data
 
 ### Create `cellchat` object
 
-cellchat <- createCellChat(object = data.input, meta = meta, group.by = "mixed_states")
+cellchat <- createCellChat(object = data.input, meta = meta, group.by = "fine_states")
 
 ### Set up ligand-receptor interaction database for `cellchat`
 
@@ -58,7 +58,7 @@ cellchat <- filterCommunication(cellchat, min.cells = 5)
 
 df.net <- subsetCommunication(cellchat)
 head(df.net)
-write.table(df.net, sep = ',', row.names = FALSE, './inferences/Mixed_Healthy-IAV_cellchat_net.csv')
+write.table(df.net, sep = ',', row.names = FALSE, './inferences/MultiC_Healthy-CTRL_cellchat_net.csv')
 
 ### Infer cell-cell communication
 
@@ -100,7 +100,7 @@ cellchat <- netAnalysis_computeCentrality(cellchat, slot.name = "netP")
 
 options(repr.plot.width = 10, repr.plot.height = 10)
 gg1 <- netAnalysis_signalingRole_scatter(cellchat)
-gg2 <- netAnalysis_signalingRole_scatter(cellchat, signaling = c("FN1", "IL1"))
+gg2 <- netAnalysis_signalingRole_scatter(cellchat, signaling = c("LAMININ", ""))
 gg1 + gg2
 
 options(repr.plot.width = 5, repr.plot.height = 5)
@@ -154,4 +154,4 @@ plotGeneExpression(cellchat, signaling = "FN1")
 
 # Save object 
 
-saveRDS(cellchat, file = "../../../data/Mixed_Healthy-IAV_anotated.rds")
+saveRDS(cellchat, file = "../../../data/MultiC_Healthy-CTRL_anotated.rds")
