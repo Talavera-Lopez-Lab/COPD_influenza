@@ -17,7 +17,7 @@ use_python("/Users/cartalop/mambaforge/envs/scanpy/bin", required = TRUE)
 
 ad <- import("anndata", convert = FALSE)
 pd <- import("pandas", convert = FALSE)
-ad_object <- ad$read_h5ad("../../../data/Mixed_Healthy-CTRL_anotated.h5ad")
+ad_object <- ad$read_h5ad("/Users/cartalop/github/COPD_influenza/data/Epithelial_Basal_states_locked_ctl230810.raw.h5ad")
 
 ### Access expression matrix
 
@@ -32,8 +32,8 @@ meta.data <- py_to_r(ad_object$obs)
 meta <- meta.data
 
 ### Create `cellchat` object
-
-cellchat <- createCellChat(object = data.input, meta = meta, group.by = "mixed_states")
+data.input.corrected <- as(as(data.input, "matrix"), "dgCMatrix")
+cellchat <- createCellChat(object = data.input.corrected , meta = meta, group.by = "cell_type")
 
 ### Set up ligand-receptor interaction database for `cellchat`
 
