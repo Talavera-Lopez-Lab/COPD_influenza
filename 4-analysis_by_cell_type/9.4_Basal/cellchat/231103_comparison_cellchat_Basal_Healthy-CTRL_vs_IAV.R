@@ -1,6 +1,7 @@
 ### Load required modules
 
 library(NMF)
+library(umap)
 library(dplyr)
 library(igraph)
 library(Matrix)
@@ -13,17 +14,17 @@ library(wordcloud)
 library(ComplexHeatmap)
 
 options(stringsAsFactors = FALSE)
-trace(netClustering, edit=TRUE)
+#trace(netClustering, edit=TRUE)
 
 use_python("/Users/cartalop/mambaforge/envs/scanpy/bin", required = TRUE)
 
 ### Read in data
 
-cellchat.ctrl <- readRDS("../../../data/Mixed_Healthy-CTRL_anotated.rds")
+cellchat.ctrl <- readRDS("../../../data/Basal_Healthy-CTRL_anotated.rds")
 cellchat.ctrl <- updateCellChat(cellchat.ctrl)
 cellchat.ctrl
 
-cellchat.iav <- readRDS("../../../data/Mixed_Healthy-IAV_anotated.rds")
+cellchat.iav <- readRDS("../../../data/Basal_Healthy-IAV_anotated.rds")
 cellchat.iav <- updateCellChat(cellchat.iav)
 cellchat.iav
 
@@ -38,14 +39,112 @@ object.list <- list(CTRL = cellchat.ctrl, IAV = cellchat.iav)
 cellchat <- mergeCellChat(object.list, add.names = names(object.list), cell.prefix = TRUE)
 cellchat
 
-
 df.net <- subsetCommunication(cellchat)
-unique(df.net$pathway_name)
+
+unique_to_ctrl <- setdiff(unique(df.net$CTRL$pathway_name), unique(df.net$IAV$pathway_name))
+unique_to_iav <- setdiff(unique(df.net$IAV$pathway_name), unique(df.net$CTRL$pathway_name))
+
+all_unique <- c(unique_to_ctrl, unique_to_iav)
+all_unique
+
+### Visualise comparative metrics
+
+gg1 <- compareInteractions(cellchat, show.legend = F, group = c(1,2))
+gg2 <- compareInteractions(cellchat, show.legend = F, group = c(1,2), measure = "weight")
+gg1 + gg2
+
+par(mfrow = c(1,2), xpd=TRUE)
+netVisual_diffInteraction(cellchat, weight.scale = T)
+netVisual_diffInteraction(cellchat, weight.scale = T, measure = "weight")
+
+gg1 <- netVisual_heatmap(cellchat)
+gg2 <- netVisual_heatmap(cellchat, measure = "weight")
+gg1 + gg2
+
+weight.max <- getMaxWeight(object.list, attribute = c("idents","count"))
+par(mfrow = c(1,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_circle(object.list[[i]]@net$count, weight.scale = T, label.edge= F, edge.weight.max = weight.max[2], edge.width.max = 12, title.name = paste0("Number of interactions - ", names(object.list)[i]))
+}
+
+###Differential number of interactions or interaction strength among different cell types
+
+num.link <- sapply(object.list, function(x) {rowSums(x@net$count) + colSums(x@net$count)-diag(x@net$count)})
+weight.MinMax <- c(min(num.link), max(num.link)) # control the dot size in the different datasets
+gg <- list()
+for (i in 1:length(object.list)) {
+  gg[[i]] <- netAnalysis_signalingRole_scatter(object.list[[i]], title = names(object.list)[i], weight.MinMax = weight.MinMax)
+}
+patchwork::wrap_plots(plots = gg)
+
+### Fcous on SERPINE Basal cells
+
+gg1 <- netAnalysis_signalingChanges_scatter(cellchat, idents.use = "SERPINE1+Basal", signaling.exclude = "MIF")
+gg2 <- netAnalysis_signalingChanges_scatter(cellchat, idents.use = "SERPINE2+Basal", signaling.exclude = c("MIF"))
+gg3 <- netAnalysis_signalingChanges_scatter(cellchat, idents.use = "TNC+Basal", signaling.exclude = c("MIF"))
+gg4 <- netAnalysis_signalingChanges_scatter(cellchat, idents.use = "Ionocyte", signaling.exclude = c("MIF"))
+patchwork::wrap_plots(plots = list(gg1,gg2,gg3,gg4))
+
+##Part II: Identify the conserved and context-specific signaling pathways
+
+#CellChat performs joint manifold learning and classification of the inferred communication networks based on their functional and topological similarity. 
+#NB: Such analysis is applicable to more than two datasets.
+#Functional similarity: High degree of functional similarity indicates major senders and receivers are similar, and it can be interpreted as the two 
+#signaling pathways or two ligand-receptor pairs exhibit similar and/or redundant roles. 
+#NB: Functional similarity analysis is not applicable to multiple datsets with different cell type composition.
+#Structural similarity: A structural similarity was used to compare their signaling network structure, without considering the similarity of senders and receivers. NB: Structural similarity analysis is applicable to multiple datsets with the same cell type composition or the vastly different cell type composition.
+#Here we can run the manifold and classification learning analysis based on the functional similarity because 
+#the two datasets have the the same cell type composition.
+
+###Identify signaling groups based on their functional similarity
+
+cellchat <- computeNetSimilarityPairwise(cellchat, type = "functional")
+cellchat <- netEmbedding(cellchat, type = "functional")
+cellchat <- netClustering(cellchat, type = "functional")
+netVisual_embeddingPairwise(cellchat, type = "functional", label.size = 3.5)
+
+###Identify signaling groups based on their structural similarity
+
+cellchat <- computeNetSimilarityPairwise(cellchat, type = "structural")
+cellchat <- netEmbedding(cellchat, type = "structural")
+cellchat <- netClustering(cellchat, type = "structural")
+netVisual_embeddingPairwise(cellchat, type = "structural", label.size = 3.5)
+
+netVisual_embeddingPairwiseZoomIn(cellchat, type = "structural", nCol = 2)
+
+rankSimilarity(cellchat, type = "functional")
+rankSimilarity(cellchat, type = "structural")
+
+gg1 <- rankNet(cellchat, mode = "comparison", stacked = T, do.stat = TRUE)
+gg2 <- rankNet(cellchat, mode = "comparison", stacked = F, do.stat = TRUE)
+gg1 + gg2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### Visualize the inferred signaling network using the lifted object
 
-pathways.show <- c("GDF") 
-weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) 
+pathways.show <- c("CXCL") 
+#weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) 
+weight.max <- getMaxWeight(cellchat, slot.name = c("netP"), attribute = pathways.show)
 vertex.receiver = seq(1,10) 
 par(mfrow = c(1,2), xpd=TRUE)
 for (i in 1:length(object.list)) {

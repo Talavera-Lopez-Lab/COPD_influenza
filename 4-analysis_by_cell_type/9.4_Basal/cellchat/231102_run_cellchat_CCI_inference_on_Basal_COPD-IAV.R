@@ -17,7 +17,7 @@ use_python("/Users/cartalop/mambaforge/envs/scanpy/bin", required = TRUE)
 
 ad <- import("anndata", convert = FALSE)
 pd <- import("pandas", convert = FALSE)
-ad_object <- ad$read_h5ad("/Users/cartalop/github/COPD_influenza/data/Epithelial_Basal_states_locked_ctl230810.raw.h5ad")
+ad_object <- ad$read_h5ad("../../../data/Basal_COPD-IAV_anotated.h5ad")
 
 ### Access expression matrix
 
@@ -32,8 +32,8 @@ meta.data <- py_to_r(ad_object$obs)
 meta <- meta.data
 
 ### Create `cellchat` object
-data.input.corrected <- as(as(data.input, "matrix"), "dgCMatrix")
-cellchat <- createCellChat(object = data.input.corrected , meta = meta, group.by = "cell_type")
+
+cellchat <- createCellChat(object = data.input, meta = meta, group.by = "cell_states")
 
 ### Set up ligand-receptor interaction database for `cellchat`
 
@@ -58,7 +58,7 @@ cellchat <- filterCommunication(cellchat, min.cells = 5)
 
 df.net <- subsetCommunication(cellchat)
 head(df.net)
-write.table(df.net, sep = ',', row.names = FALSE, './inferences/Mixed_Healthy-CTRL_cellchat_net.csv')
+write.table(df.net, sep = ',', row.names = FALSE, 'Basal_COPD-IAV_cellchat_net.csv')
 
 ### Infer cell-cell communication
 
@@ -154,4 +154,4 @@ plotGeneExpression(cellchat, signaling = "FN1")
 
 # Save object 
 
-saveRDS(cellchat, file = "../../../data/Mixed_Healthy-CTRL_anotated.rds")
+saveRDS(cellchat, file = "../../../data/Basal_COPD-IAV_anotated.rds")
