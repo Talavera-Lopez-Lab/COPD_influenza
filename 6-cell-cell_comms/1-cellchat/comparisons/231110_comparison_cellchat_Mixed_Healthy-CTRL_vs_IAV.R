@@ -13,38 +13,83 @@ library(wordcloud)
 library(ComplexHeatmap)
 
 options(stringsAsFactors = FALSE)
-#trace(netClustering, edit=TRUE)
+#trace(netClustering, edit = TRUE)
 
 use_python("/Users/cartalop/mambaforge/envs/scanpy/bin", required = TRUE)
 
 ### Read in data
 
-cellchat.ctrl <- readRDS("../../../data/Mixed_Healthy-CTRL_anotated.rds")
-cellchat.ctrl <- updateCellChat(cellchat.ctrl)
-cellchat.ctrl
+cellchat.H_ctrl <- readRDS("../../../data/Epithelial_Healthy-CTRL_anotated.rds")
+cellchat.H_ctrl <- updateCellChat(cellchat.H_ctrl)
+cellchat.H_ctrl
 
-cellchat.iav <- readRDS("../../../data/data/Mixed_Healthy-IAV_anotated.rds")
-cellchat.iav <- updateCellChat(cellchat.iav)
-cellchat.iav
+cellchat.H_iav <- readRDS("../../../data/Epithelial_Healthy-IAV_anotated.rds")
+cellchat.H_iav <- updateCellChat(cellchat.H_iav)
+cellchat.H_iav
 
-### Lift up objects to deal with different populations
+cellchat.C_ctrl <- readRDS("../../../data/Epithelial_COPD-CTRL_anotated.rds")
+cellchat.C_ctrl <- updateCellChat(cellchat.C_ctrl)
+cellchat.C_ctrl
 
-group.new = levels(cellchat.iav@idents)
-cellchat.ctrl <- liftCellChat(cellchat.ctrl, group.new)
+cellchat.C_iav <- readRDS("../../../data/Epithelial_COPD-IAV_anotated.rds")
+cellchat.C_iav <- updateCellChat(cellchat.C_iav)
+cellchat.C_iav
+
+### Lift objects to level cell numbers 
+
+group.new = levels(cellchat.H_iav@idents)
+cellchat.H_ctrl <- liftCellChat(cellchat.H_ctrl, group.new)
+
+group.new = levels(cellchat.C_iav@idents)
+cellchat.C_ctrl <- liftCellChat(cellchat.C_ctrl, group.new)
 
 ### Merge objects
 
-object.list <- list(CTRL = cellchat.ctrl, IAV = cellchat.iav)
+object.list <- list(H_CTRL = cellchat.H_ctrl, H_IAV = cellchat.H_iav, C_CTRL = cellchat.C_ctrl, C_IAV = cellchat.C_iav)
 cellchat <- mergeCellChat(object.list, add.names = names(object.list), cell.prefix = TRUE)
 cellchat
 
-
 df.net <- subsetCommunication(cellchat)
-unique(df.net$pathway_name)
+
+unique_to_Hctrl <- setdiff(unique(df.net$H_CTRL$pathway_name), unique(df.net$H_IAV$pathway_name))
+unique_to_Hctrl
+
+unique_to_Hiav <- setdiff(unique(df.net$H_IAV$pathway_name), unique(df.net$H_CTRL$pathway_name))
+unique_to_Hiav
+
+unique_to_Cctrl <- setdiff(unique(df.net$C_CTRL$pathway_name), unique(df.net$C_IAV$pathway_name))
+unique_to_Cctrl
+
+unique_to_Ciav <- setdiff(unique(df.net$C_IAV$pathway_name), unique(df.net$C_CTRL$pathway_name))
+unique_to_Ciav
+
+all_unique <- c(unique_to_Hctrl, unique_to_Hiav, unique_to_Cctrl, unique_to_Ciav)
+all_unique
+
+### Differential number of interactions or interaction strength among different cell populations
+
+par(mfrow = c(1,2), xpd = TRUE)
+netVisual_diffInteraction(cellchat, weight.scale = T)
+netVisual_diffInteraction(cellchat, weight.scale = T, measure = "weight")
+
+### Same visualisation but in heatmap mode
+
+gg1 <- netVisual_heatmap(cellchat)
+gg2 <- netVisual_heatmap(cellchat, measure = "weight")
+gg1 + gg2
+
+
+weight.max <- getMaxWeight(object.list, attribute = c("idents","count"))
+par(mfrow = c(2,2), xpd=TRUE)
+for (i in 1:length(object.list)) {
+  netVisual_circle(object.list[[i]]@net$count, weight.scale = T, label.edge= F, edge.weight.max = weight.max[2], edge.width.max = 12, title.name = paste0("Number of interactions - ", names(object.list)[i]))
+}
+
+
 
 ### Visualize the inferred signaling network using the lifted object
 
-pathways.show <- c("GDF") 
+pathways.show <- c("SPP1") 
 weight.max <- getMaxWeight(object.list, slot.name = c("netP"), attribute = pathways.show) 
 vertex.receiver = seq(1,10) 
 par(mfrow = c(1,2), xpd=TRUE)
