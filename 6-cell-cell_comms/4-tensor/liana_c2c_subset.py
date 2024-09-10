@@ -12,9 +12,9 @@ adata_path = os.path.join(data_dir, 'Marburg_cell_states_locked_ctl240709.raw.h5
 print('load data')
 adata_all = sc.read_h5ad(adata_path) 
 
-conditions = list(adata_all.obs['disease'].unique())
+conditions = list(adata_all.obs['group'].unique())
 for condition in tqdm(conditions):
-    adata = adata_all[adata_all.obs['disease'] == condition]
+    adata = adata_all[adata_all.obs['group'] == condition]
     sample_key = 'batch'
     condition_key = 'group'
     groupby = 'cell_compartment'
