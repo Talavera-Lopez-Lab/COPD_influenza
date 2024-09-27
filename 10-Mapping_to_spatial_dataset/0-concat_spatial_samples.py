@@ -14,7 +14,7 @@ for folder in (local_folder_data / 'raw').iterdir():
 print('samples Loaded')
 for adata in adatas:
     adata.var_names_make_unique()
-adata = sc.concat(adatas)
+adata = sc.concat(adatas, uns_merge='unique')
 adata.obs = adata.obs.reset_index().merge(metadata, on='sample_id', how='left').set_index('index')
 adata.obs_names_make_unique()
 sc.pp.filter_cells(adata, min_counts=200)
