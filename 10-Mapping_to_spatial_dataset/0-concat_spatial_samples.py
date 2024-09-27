@@ -5,11 +5,16 @@ import pandas as pd
 
 local_folder_data = Path.cwd() / '.data'
 metadata = pd.read_csv(local_folder_data / 'hs_visium_metadata.tsv', sep='\t', index_col='sample_id')
+celldata = pd.read_csv(local_folder_data / 'metadata_seurat_object.csv', sep=' ')
+celldata.index = celldata.index.str.replace(r'[-_]\d+', '', regex=True)
 
 adatas = []
 for folder in (local_folder_data / 'raw').iterdir():
     adata = sq.read.visium(folder)
-    adata.obs['sample_id'] = folder.name
+    adata.obs.index = adata.obs.index.str.replace(r'[-_]\d+', '', regex=True)
+    celldata_sample = celldata[celldata['sample_id'] == folder.name]
+    adata.obs = adata.obs.join(celldata_sample)
+    #adata.obs['sample_id'] = folder.name
     adatas.append(adata)
 print('samples Loaded')
 for adata in adatas:
