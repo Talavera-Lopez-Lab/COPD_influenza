@@ -1,10 +1,7 @@
 from pathlib import Path
-import squidpy as sq
-import torch
 import scanpy as sc
 import cell2location
 import numpy as np
-import matplotlib.pyplot as plt
 from datetime import datetime
 
 global_repo_data = Path.cwd() / '..' / '.data'
@@ -72,7 +69,7 @@ adata_spatial = sc.read_h5ad(local_folder_data / 'Franzen_L_2024_human.h5ad')
 filtered_columns = list(adata_spatial.obs.columns[~adata_spatial.obs.columns.str.startswith("c2l")])
 adata_spatial.obs = adata_spatial.obs[filtered_columns]
 adata_spatial.obs['batch'] = adata_spatial.obs['sample_id']
-samples = list(adata_spatial.obs['batch'].unique())
+samples = [sample for sample in list(adata_spatial.obs['batch'].unique()) if isinstance(sample, str)]
 for sample in samples:
     adata_spatial_sample = adata_spatial[adata_spatial.obs['batch'] == sample]
     intersect = np.intersect1d(adata_spatial_sample.var_names, inf_aver.index)
@@ -95,5 +92,5 @@ for sample in samples:
         adata_spatial_sample, sample_kwargs={'num_samples': 1000, 'batch_size': mod.adata.n_obs}
     )
     mod.save(run_name, overwrite=True)
-    adata_file = run_name / "{sample}.h5ad"
+    adata_file = run_name / f"{sample}.h5ad"
     adata_spatial_sample.write(adata_file)
