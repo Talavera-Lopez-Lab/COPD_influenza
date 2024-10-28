@@ -1,3 +1,7 @@
+"""
+This script is identical to the identically named notebook
+"""
+
 from pathlib import Path
 import scanpy as sc
 import cell2location
@@ -82,10 +86,7 @@ for sample in samples:
         detection_alpha=20
     )
     mod.train(max_epochs=30000,
-          # train using full data (batch_size=None)
           batch_size=None,
-          # use all data points in training because
-          # we need to estimate cell abundance at all locations
           train_size=1,
     )
     adata_spatial_sample = mod.export_posterior(
