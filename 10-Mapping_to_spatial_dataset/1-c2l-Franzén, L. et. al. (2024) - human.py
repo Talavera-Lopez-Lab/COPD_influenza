@@ -71,11 +71,13 @@ else:
 inf_aver.columns = adata_reference.uns['mod']['factor_names']
 
 adata_spatial = sc.read_h5ad(local_folder_data / 'Franzen_L_2024_human.h5ad')
+adata_spatial = adata_spatial[adata_spatial.obs["condition_x"] == "control"]
 filtered_columns = list(adata_spatial.obs.columns[~adata_spatial.obs.columns.str.startswith("c2l")])
 adata_spatial.obs = adata_spatial.obs[filtered_columns]
 adata_spatial.obs['batch'] = adata_spatial.obs['sample_id']
 samples = [sample for sample in list(adata_spatial.obs['batch'].unique()) if isinstance(sample, str)]
 for sample in samples:
+    print(f"training: {sample}")
     adata_spatial_sample = adata_spatial[adata_spatial.obs['batch'] == sample]
     intersect = np.intersect1d(adata_spatial_sample.var_names, inf_aver.index)
     adata_spatial_sample = adata_spatial_sample[:, intersect].copy()
@@ -86,7 +88,7 @@ for sample in samples:
         N_cells_per_location=30,
         detection_alpha=20
     )
-    mod.train(max_epochs=30000,
+    mod.train(max_epochs=20000,
           batch_size=None,
           train_size=1,
     )
