@@ -30,8 +30,9 @@ if rerun_reference:
     adata_habermann.obs["batch"] = adata_habermann.obs["Sample_Name"]
 
     epithelial_cell_types = [
-        "Basal", "Proliferating Epithelial Cells",
-        "Differentiating Ciliated", "Ciliated",
+        'Basal', 'Ciliated', 'Differentiating Ciliated', 'SCGB3A2+',
+        'SCGB3A2+ SCGB1A1+',  'MUC5AC+ High', 'MUC5B+', 'AT1',
+        'AT2', 'Proliferating Epithelial Cells', 'Transitional AT2', 'KRT5-/KRT17+',
     ]
     adata_habermann = adata_habermann[~adata_habermann.obs["celltype"].isin(epithelial_cell_types)]
 
