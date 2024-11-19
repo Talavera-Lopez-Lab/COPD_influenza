@@ -3,3 +3,6 @@ data
 .Rproj.user
 .DS_Store
 5-CCI_inference/analysis_using_rds/.Rhistory
+*data
+figures
+plots_output
